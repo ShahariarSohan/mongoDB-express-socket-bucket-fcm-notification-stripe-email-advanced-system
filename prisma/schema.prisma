@@ -1,0 +1,510 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SHOP_OWNER
+  SUPER_ADMIN
+}
+
+enum Status {
+  PENDING
+  ACTIVE
+  BLOCKED
+  SUSPENDED
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PREMIUM
+}
+
+enum Platform {
+  ANDROID
+  IOS
+}
+
+enum ShopStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum DealStatus {
+  ACTIVE
+  PAUSE
+  EXPIRED
+  CANCELLED
+}
+
+enum ShopType {
+  PHYSICAL
+  ONLINE
+  HYBRID
+}
+
+enum ChallengeCategory {
+  FRIENDS
+  FAMILY
+  COLLEAGUES
+}
+
+enum ChallengeInvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum ChallengeParticipantStatus {
+  ACCEPTED
+}
+
+enum ReferralStatus {
+  PENDING
+  ACCEPTED
+}
+
+model User {
+  id                           String                   @id @default(auto()) @map("_id") @db.ObjectId
+  email                        String                   @unique
+  firstName                    String?
+  lastName                     String?
+  name                         String?
+  phoneNumber                  String?
+  bio                          String?
+  role                         Role                     @default(USER)
+  password                     String
+  platform                     Platform?
+  fcmToken                     String?
+  image                        String?
+  latitude                     Float?
+  longitude                    Float?
+  customerId                   String?
+  connectAccountId             String?
+  subscriptionPlan             SubscriptionPlan?
+  status                       Status                   @default(PENDING)
+  isVerified                   Boolean                  @default(false)
+  isComplete                   Boolean                  @default(false)
+  // Notification preferences
+  dealFromFavouriteShop        Boolean                  @default(true)
+  nearbyNewDeal                Boolean                  @default(true)
+  milesCompleted               Boolean                  @default(true)
+  remainder                    Boolean                  @default(true)
+  lastIosAppReminderSentAt     DateTime?
+  // Referral system
+  referralCode                 String?
+  referredBy                   String?                  @db.ObjectId
+  referredByUser               User?                    @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  referredUsers                User[]                   @relation("UserReferrals")
+  // Multiple referral connections
+  addedReferralCodes           UserReferralConnection[] @relation("UserAddedCodes")
+  addedByUsers                 UserReferralConnection[] @relation("UserAddedByOthers")
+  referralsSent                Referral[]               @relation("ReferralsSent")
+  referralsReceived            Referral[]               @relation("ReferralsReceived")
+  createdAt                    DateTime                 @default(now())
+  updatedAt                    DateTime                 @updatedAt
+  receiver                     Notifications[]          @relation("receiverDetails")
+  sender                       Notifications[]          @relation("senderDetails")
+  SubscriptionUser             SubscriptionUser?
+  shops                        Shop[]
+  deals                        Deal[]
+  steps                        Steps[]
+  vouchers                     Voucher[]
+  userPoints                   UserPoints?
+  favouriteDeals               FavouriteDeal[]
+  favouriteShops               FavouriteShop[]
+  createdChallenges            Challenge[]              @relation("ChallengeCreator")
+  challengeParticipants        ChallengeParticipant[]
+  challengeInvitationsSent     ChallengeInvitation[]    @relation("ChallengeInviter")
+  challengeInvitationsReceived ChallengeInvitation[]    @relation("ChallengeInvitee")
+
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
+  @@index([isVerified])
+  @@index([referralCode])
+  @@index([referredBy])
+}
+
+// Track multiple referral code connections between users
+model UserReferralConnection {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId // User who added the code
+  referredUserId String   @db.ObjectId // User whose code was added
+  referralCode   String // The referral code that was used
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation("UserAddedCodes", fields: [userId], references: [id], onDelete: Cascade)
+  referredUser   User     @relation("UserAddedByOthers", fields: [referredUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, referredUserId])
+  @@index([userId])
+  @@index([referredUserId])
+  @@index([referralCode])
+  @@map("user_referral_connections")
+}
+
+model Referral {
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  referrerUserId String         @db.ObjectId
+  invitedUserId  String         @db.ObjectId
+  referralCode   String
+  status         ReferralStatus @default(PENDING)
+  rewardGiven    Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  referrer    User @relation("ReferralsSent", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  invitedUser User @relation("ReferralsReceived", fields: [invitedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([referrerUserId, invitedUserId])
+  @@index([referrerUserId])
+  @@index([invitedUserId])
+  @@index([referralCode])
+  @@index([status])
+  @@map("referrals")
+}
+
+model Shop {
+  id                        String          @id @default(auto()) @map("_id") @db.ObjectId
+  name                      String
+  email                     String
+  phone                     String
+  userId                    String          @db.ObjectId
+  latitude                  Float?
+  longitude                 Float?
+  description               String
+  vatNumber                 String
+  kvk                       String?
+  logo                      String?
+  coverPhoto                String?
+  address                   String?
+  shopType                  ShopType?
+  website                   String?
+  openingHours              String?
+  chamberOfCommerce         String?
+  shopStatus                ShopStatus      @default(PENDING)
+  freeSubscriptionExpiresAt DateTime?
+  
+  // Subscription & Stripe Tracking
+  subscriptionStatus        String          @default("Trial") // Trial, Active, Expired, PaymentPending, Cancelled
+  hasActiveSubscription     Boolean?        @default(false)
+  isTrialActive             Boolean?        @default(true)
+  trialStartDate            DateTime?
+  trialEndDate              DateTime?
+  subscriptionStartDate     DateTime?
+  subscriptionEndDate       DateTime?
+  stripeCustomerId          String?
+  stripeSubscriptionId      String?
+  cancelAtPeriodEnd         Boolean         @default(false)
+
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+  user                      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deals                     Deal[]
+  favouritedBy              FavouriteShop[]
+
+  @@index([userId])
+  @@map("shops")
+}
+
+model Deal {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  userId        String          @db.ObjectId
+  category      String
+  subCategory   String
+  description   String
+  discount      Float
+  price         Float
+  originalPrice Float
+  views         Int             @default(0)
+  requiredDM    Int          
+  quantity      Int
+  shopId        String          @db.ObjectId
+  images        String[]
+  validFrom     DateTime
+  validTo       DateTime
+  barCodeImg       String?
+  checkoutLink  String?
+  discountCode  String?
+  promoCode      String?
+  dealType      DealType?
+  status        DealStatus      @default(ACTIVE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt     
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop          Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  vouchers      Voucher[]
+  favouritedBy  FavouriteDeal[]
+
+  @@index([userId])
+  @@index([shopId])
+  @@index([category])
+  @@map("deals")
+}
+enum DealType {
+  PHYSICALDEAL
+  ONLINEDEAL
+}
+model Steps {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  steps     Int
+  points    Int
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@map("steps")
+}
+
+model UserPoints {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @unique @db.ObjectId
+  totalPoints Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_points")
+}
+
+model PointsHistory {
+  id          String            @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String            @db.ObjectId
+  points      Int
+  type        PointsHistoryType
+  source      String
+  description String
+  metadata    Json?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([type])
+  @@map("points_history")
+}
+
+enum PointsHistoryType {
+  EARNED
+  SPENT
+  BONUS
+  REFUND
+}
+
+model Voucher {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String    @db.ObjectId
+  dealId     String    @db.ObjectId
+  code       String?
+  isRedeemed Boolean   @default(false)
+  redeemedAt DateTime?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deal       Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@index([userId])
+  @@index([code])
+  @@index([isRedeemed])
+  @@index([isActive])
+  @@map("vouchers")
+}
+
+model FavouriteDeal {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  dealId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dealId])
+  @@index([userId])
+  @@index([dealId])
+  @@map("favourite_deals")
+}
+
+model FavouriteShop {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  shopId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shopId])
+  @@index([userId])
+  @@index([shopId])
+  @@map("favourite_shops")
+}
+
+model StreakTimer {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  days      Int
+  points    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("streaks")
+}
+
+model UnlockedStreakMilestone {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  streakTimerId   String   @db.ObjectId
+  daysSinceUnlock Int      @default(0)
+  unlockedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, streakTimerId])
+  @@index([userId])
+  @@index([streakTimerId])
+  @@map("unlocked_streak_milestones")
+}
+
+model Challenge {
+  id                         String                 @id @default(auto()) @map("_id") @db.ObjectId
+  name                       String
+  description                String?
+  category                   ChallengeCategory
+  durationWeeks              Int
+  startDate                  DateTime
+  endDate                    DateTime
+  maxParticipants            Int                    @default(15)
+  createdBy                  String                 @db.ObjectId
+  rewardsDistributed         Boolean                @default(false)
+  rewardPointsPerParticipant Int                    @default(0)
+  totalRewardPoints          Int                    @default(0)
+  createdAt                  DateTime               @default(now())
+  updatedAt                  DateTime               @updatedAt
+  creator                    User                   @relation("ChallengeCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  participants               ChallengeParticipant[]
+  invitations                ChallengeInvitation[]
+
+  @@index([createdBy])
+  @@index([startDate])
+  @@index([endDate])
+  @@map("challenges")
+}
+
+model ChallengeParticipant {
+  id           String                     @id @default(auto()) @map("_id") @db.ObjectId
+  challengeId  String                     @db.ObjectId
+  userId       String                     @db.ObjectId
+  status       ChallengeParticipantStatus @default(ACCEPTED)
+  rewardPoints Int                        @default(0)
+  joinedAt     DateTime                   @default(now())
+  createdAt    DateTime                   @default(now())
+  updatedAt    DateTime                   @updatedAt
+  challenge    Challenge                  @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user         User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, userId])
+  @@index([userId])
+  @@index([challengeId])
+  @@map("challenge_participants")
+}
+
+model ChallengeInvitation {
+  id          String                    @id @default(auto()) @map("_id") @db.ObjectId
+  challengeId String                    @db.ObjectId
+  inviterId   String                    @db.ObjectId
+  inviteeId   String                    @db.ObjectId
+  status      ChallengeInvitationStatus @default(PENDING)
+  acceptedAt  DateTime?
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+  challenge   Challenge                 @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  inviter     User                      @relation("ChallengeInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee     User                      @relation("ChallengeInvitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, inviteeId])
+  @@index([inviteeId])
+  @@index([inviterId])
+  @@index([status])
+  @@map("challenge_invitations")
+}
+
+model OTP {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  otp       Int
+  expiry    DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiry])
+  @@map("otps")
+}
+
+model Notifications {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId        String   @db.ObjectId
+  receiverId      String   @db.ObjectId
+  title           String
+  body            String
+  read            Boolean  @default(false)
+  isMilesComplete Boolean  @default(false) // Flag to identify miles completion notification
+  milesCount      Int? // Number of miles completed (1, 2, or 3)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  sender          User     @relation("senderDetails", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver        User     @relation("receiverDetails", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  stripeProductId   String
+  stripePriceId     String
+  price             Float
+  vat               Float?
+  description       String
+  currency          String             @default("eur")
+  interval          Interval           @default(MONTHLY)
+  status            String             @default("active")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  subscriptionUsers SubscriptionUser[]
+}
+
+enum Interval {
+  MONTHLY
+  YEARLY
+}
+
+model SubscriptionUser {
+  id                 String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String       @unique @db.ObjectId
+  subscriptionPlanId String       @db.ObjectId
+  subscriptionId     String
+  subscriptionStatus String
+  subscriptionStart  DateTime
+  subscriptionEnd    DateTime
+  userDetails        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionPlan   Subscription @relation(fields: [subscriptionPlanId], references: [id], onDelete: Cascade)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+}

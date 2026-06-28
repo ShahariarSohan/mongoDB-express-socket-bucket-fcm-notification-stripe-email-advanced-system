@@ -1,0 +1,14 @@
+export const serviceAccount = {
+  type: "service_account",
+  project_id: "daily-miles",
+  private_key_id: "0b53aaa502cad010a6e477697a3cb6c39d5369d9",
+  private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCR+aZ14RxDuGiI\n3o/G+6gy7vwvb/i1lg7x5M/yTIgHzBGpfY36gWbFDLVz9R7HbgnHipTKi8ibLIPf\nuurmoIVHFUWGoYQuy65K83AULWhnGQqBXaBxgUPc9N7d5e024uY5qmX6kO1S6LCR\n882FCH5Ra5HvlQsOv7DMH4bo4wvCdZKcxISoYNCUWuqBHUHvKSiNEBx4eaOfqMPQ\nMAraBTUux1f97a9kT42iCauSsVDQwwFUZ4u5HrVHmZQwH6PJkFE04AWSh3mtR4eI\nu3jdUDZYIyr6+G5Yo4OTPCbxQVjj6wAxnjMqQbRAbuXn4Lggy8TVNWjQ5tnQdkX+\nCm1GiQd/AgMBAAECggEAN9yBEpgwQEwYGNSO0ddpMQCami6vzxGbK39kAnW+ErnJ\nwoItLIGLifnIkJTrj+bwsB88vFwMyzEYUCxQCyy/hAnEXvZ9RokkbENHjzknPFjt\nV780EGumxC4jAWilQ/1FnCi0uNPwNeuc8mWJrxCmglL3eGchYaYCqsKf1oxYajQP\nCmtBZT8O5tsL85uUWhIbYvJwb20TWf8Sh20oeU97NA6fAtgU2wBo3386qLL78gcH\nSebNjtKZuQhYBX8JcK8VYOv23J8JpxY0JwZv+R7j+K5DGhHGpEZdqi7uttMbhMoG\n1rqpjQ6Mufo710xfbciA/DyayOO+yJQOFlInPSvmfQKBgQDEuOoB90tatB+Z4mWG\nY68/qczJc9yH7wAYT26me0dQr2IoXYof2AdiWHtZNOSGzefiU1zk7oDJdg0DVx6N\niO6Oa8RYA6XFzgSW7r+a3nkg2c0Ykt6BWJgILhWh+qEiWVkgjcxf5jP2YbmfJfSa\nGCyfeyk3rgMX2I5o9cPtJuxnUwKBgQC99h89YezBoc2LhWHcsTlfe8aPCN1y1MOC\nqZ/gauOigrbpeb4B+UFBOBw3FRcWm8FEbPW7SXRDg+jsTxG0mDzjq0sikPhZsTy1\n95DPfW4szooh8GtLBCXwyVOGhcNMR4AuwDeM/WLHHiIQqtx/Wcw9daHxAen2TJQz\nYl/5CJj1pQKBgB07yXKPWEBbYhLRJPsqlyFjz03kjNIafy4dp7jPuxJPbcvH0r3W\nsYo40eO4y3kI4jus3bIbi0Hk7Bwh9yVbQvAhLaVSrXDOo7n2Mr0F8IQkOak8MhqQ\nms8kYgyXHRjopCkFSWi64d/sN9RhpI69puvwNnjSwBzsDoWkeAAm95yHAoGBAKYq\n1cjsEB6RWyvg0Wor3PQZYedc6dm5JAz4NFIrLlTJ4xb4160CTIKwgn3shPXR6Y3h\nglMCPiGREf8ka2h+g0TkYiUqixRqZaEHnjTik62+PjbSCAjm6AlpExdpixz+rrI2\nkmFShUWIpmPOEnOUKYTZkX8xHWfGNR19wFYnnyXBAoGBAJxEMfPYIaGhRWRb1no5\nf2I/xWKlevZUGYWQBYDaQX/OC1+pJd87kHpwfbSWSFDJVsNR6bRQirWOyw/wk5p7\neviosCJGtpa+5QIUwK7rgVVKGeE3OVswgKiDWffSXFD7rfqpiVAv5ok+9dVKxSW8\nylAJrnUSrr2ZscXCGv+F9MVc\n-----END PRIVATE KEY-----\n",
+  client_email: "firebase-adminsdk-fbsvc@daily-miles.iam.gserviceaccount.com",
+  client_id: "114576362654463243428",
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40daily-miles.iam.gserviceaccount.com",
+  universe_domain: "googleapis.com"
+};
+  

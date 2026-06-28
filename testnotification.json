@@ -1,0 +1,48 @@
+{
+  "info": {
+    "name": "Test iOS Push Notification",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Test iOS Push Notification",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Test iOS Push\",\n  \"body\": \"This is a one-time iOS test notification\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/notifications/test-ios/{{ios_user_id}}?lang={{lang}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "notifications",
+            "test-ios",
+            "{{ios_user_id}}"
+          ],
+          "query": [
+            {
+              "key": "lang",
+              "value": "{{lang}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
